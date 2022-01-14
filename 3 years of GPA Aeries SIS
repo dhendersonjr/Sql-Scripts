@@ -1,0 +1,44 @@
+-- Create a result of students with the last 3 years of thier GPA
+-- Using AERIES SIS
+DECLARE @Site int = 40
+DECLARE @Grade int = 8
+
+DROP TABLE IF EXISTS #StuList
+DROP TABLE IF EXISTS #GPAData
+DECLARE @ID int
+DECLARE @GPA19 money
+DECLARE @GPA20 money
+DECLARE @GPA21 money
+DECLARE @SX varchar(2)
+DECLARE @RC varchar(30)
+DECLARE @ETH varchar(3)
+
+CREATE TABLE #GPAData ( ID int, GPA19 money, GPA20 money, GPA21 money, Gender varchar(2), Hispanic varchar(3), Race varchar(30) )
+
+SELECT * INTO #StuList FROM(
+							SELECT DISTINCT(ID) 
+							FROM STU 
+							WHERE 
+								STU.SC = @Site and 
+								STU.TG = '' and 
+								STU.DEL !=1 and 
+								STU.GR = @Grade
+							) as StuTemp
+
+WHILE EXISTS(SELECT * FROM #StuList) 
+BEGIN
+	SELECT TOP 1 @ID = ID FROM #StuList
+	SELECT @GPA19 = T2 FROM GRG WHERE GRG.SCL = @Site AND GRG.PID = @ID and GRG.DEL != 1 and GRG.YR = '2019'
+	SELECT @GPA20 = T2 FROM GRG WHERE GRG.SCL = @Site AND GRG.PID = @ID and GRG.DEL != 1 and GRG.YR = '2020'
+	SELECT @GPA21 = T2 FROM GRG WHERE GRG.SCL = @Site AND GRG.PID = @ID and GRG.DEL != 1 and GRG.YR = '2021'
+	SELECT @SX = STU.SX, @RC = (SELECT COD.DE FROM COD WHERE COD.TC = 'STU' and COD.FC='RC1' and COD.CD =  STU.RC1), @ETH = STU.ETH FROM STU WHERE STU.SC = @Site and STU.ID = @ID and STU.DEL != 1 
+	INSERT 
+		INTO 
+			#GPAData (ID, GPA19, GPA20, GPA21, Gender, Hispanic, Race) 
+			values	(@ID,@GPA19,@GPA20, @GPA21, @SX, @ETH, @RC)
+	
+	
+	DELETE #StuList Where ID = @ID
+END
+
+SELECT GPA19, GPA20, GPA21, Gender, Hispanic, Race FROM #GPAData
