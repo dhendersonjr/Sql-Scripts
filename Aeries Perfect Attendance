@@ -1,0 +1,79 @@
+-- Calculates perfect attendance based on Attenance codes included 
+-- System used Aeries SIS
+
+
+DECLARE @AttCodes TABLE (Code varchar(1));
+DECLARE  @Site as INT = 0;
+DECLARE @StartDate as Varchar(10) = '11/1/2021'
+DECLARE @EndDate As Varchar(10) = '11/4/2021'
+
+
+	-- Uncomment the insert to include the code
+										 --Code	Title	
+	--insert into @AttCodes values ('A') --A	UNVERIFIED	
+	--insert into @AttCodes values ('B') --B	UnEx Tardy	
+	--insert into @AttCodes values ('C') --C	IND STUDY	
+	--insert into @AttCodes values ('D') --D	U Tardy+30	
+	--insert into @AttCodes values ('E') --E	Excluded		
+	--insert into @AttCodes values ('F') --F	INC IND ST		
+	--insert into @AttCodes values ('H') --H	HOME/HOSP		
+	--insert into @AttCodes values ('I') --I	ILLNESS	ILL	
+	--insert into @AttCodes values ('J') --J	JUSTIFIABL		
+	--insert into @AttCodes values ('M') --M	MEDICAL	MED	
+	--insert into @AttCodes values ('N') --N	PEND IND		
+	--insert into @AttCodes values ('O') --O	OTHER	OTH		
+	--insert into @AttCodes values ('P') --P	Present	PRE	
+	--insert into @AttCodes values ('Q') --Q	Quarantine		
+	--insert into @AttCodes values ('R') --R	ROOM	RM		
+	--insert into @AttCodes values ('S') --S	SUSPENDED		
+	--insert into @AttCodes values ('T') --T	TARDY/Lat		
+	--insert into @AttCodes values ('U') --U	TRUANT	TRU	
+	--insert into @AttCodes values ('V') --V	ACTIVITY	
+	--insert into @AttCodes values ('W') --W	Pending IS	
+	--insert into @AttCodes values ('X') --X	UnEx/Ver		
+	--insert into @AttCodes values ('Y') --Y	UnxLeaveEa	
+	--insert into @AttCodes values ('Z') --Z	LEA EARLY		
+
+
+-- Perfect Period Attendance 
+
+---- Set The Site ----- 
+DECLARE @StuWithCodes TABLE (ID int);
+INSERT INTO @StuWithCodes (ID)
+	SELECT ID
+	FROM (
+
+		SELECT 
+			DISTINCT(StuSubTable.ID) 
+		FROM ATT as AttSubTable
+		left join STU as StuSubTable on AttSubTable.SC = StuSubTable.SC and AttSubTable.SN = StuSubTable.SN
+
+		WHERE 
+			AttSubTable.SC = @Site and 
+			AttSubTable.DEL !=1 and StuSubTable.DEL !=1 and StuSubTable.TG = '' and
+
+			AttSubTable.DT >= @StartDate and 
+			AttSubTable.DT <= @EndDate and 
+			(
+				(AttSubTable.A0 in (Select Code FRoM @AttCodes)) or
+				(AttSubTable.A1 in (Select Code FRoM @AttCodes)) or 
+				(AttSubTable.A2 in (Select Code FRoM @AttCodes)) or 
+				(AttSubTable.A3 in (Select Code FRoM @AttCodes)) or 
+				(AttSubTable.A4 in (Select Code FRoM @AttCodes)) or
+				(AttSubTable.A5 in (Select Code FRoM @AttCodes)) or 
+				(AttSubTable.A6 in (Select Code FRoM @AttCodes)) or 
+				(AttSubTable.A7 in (Select Code FRoM @AttCodes)) or
+				(AttSubTable.A8 in (Select Code FRoM @AttCodes)) or
+				(AttSubTable.A9 in (Select Code FRoM @AttCodes)) 
+			)
+	
+
+	) as TempStuAttTable
+--------------- Your Query Below --------------
+SELECT 
+	STU.ID 
+
+FROM STU 
+
+WHERE 
+	STU.ID not in (SELECT * FROM @StuWithCodes)
